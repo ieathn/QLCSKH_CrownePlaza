@@ -1,0 +1,166 @@
+{% extends 'admin/base.html' %}
+{% load static humanize %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Bảng điều khiển</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Bảng điều khiển {% if is_staff %}Nhân viên{% else %}Quản lý{% endif %}</h2>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card primary">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng số phòng</h5>
+                    <p class="card-text display-4">{{ total_rooms }}</p>
+                    {% if is_admin %}
+                    <a href="{% url 'admin_room_management' %}" class="btn btn-outline-primary">Quản lý phòng</a>
+                    {% else %}
+                    <button class="btn btn-outline-primary disabled" disabled>Quản lý phòng</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card success">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng số đặt phòng</h5>
+                    <p class="card-text display-4">{{ total_bookings }}</p>
+                    <a href="{% url 'admin_booking_management' %}" class="btn btn-outline-success">Xem đặt phòng</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card warning">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng số khách hàng</h5>
+                    <p class="card-text display-4">{{ total_customers }}</p>
+                    {% if is_admin %}
+                    <a href="{% url 'admin_customer_management' %}" class="btn btn-outline-warning">Quản lý khách hàng</a>
+                    {% else %}
+                    <button class="btn btn-outline-warning disabled" disabled>Quản lý khách hàng</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card danger">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng số dịch vụ</h5>
+                    <p class="card-text display-4">{{ total_services }}</p>
+                    {% if is_admin %}
+                    <a href="{% url 'admin_service_management' %}" class="btn btn-outline-danger">Quản lý dịch vụ</a>
+                    {% else %}
+                    <button class="btn btn-outline-danger disabled" disabled>Quản lý dịch vụ</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Đặt phòng gần đây</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã đặt phòng</th>
+                            <th>Khách hàng</th>
+                            <th>Phòng</th>
+                            <th>Ngày nhận</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in recent_bookings %}
+                        <tr>
+                            <td>{{ booking.ma_ddp }}</td>
+                            <td>{{ booking.khach_hang.ten_kh }}</td>
+                            <td>{{ booking.phong.ten_p }}</td>
+                            <td>{{ booking.ngay_nhan|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="status-badge {% if booking.trang_thai == 'cho_xac_nhan' %}badge-waiting{% elif booking.trang_thai == 'da_xac_nhan' %}badge-confirmed{% elif booking.trang_thai == 'da_checkin' %}badge-checked-in{% elif booking.trang_thai == 'da_checkout' %}badge-checked-out{% else %}badge-cancelled{% endif %}">
+                                    {{ booking.get_trang_thai_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Không có đặt phòng gần đây.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Yêu cầu đang chờ xử lý</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã yêu cầu</th>
+                            <th>Khách hàng</th>
+                            <th>Phòng</th>
+                            <th>Nội dung</th>
+                            <th>Trạng thái</th>
+                            {% if is_admin %}
+                            <th>Nhân viên</th>
+                            <th>Hành động</th>
+                            {% else %}
+                            <th>Hành động</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in pending_requests %}
+                        <tr>
+                            <td>{{ request.ma_yc }}</td>
+                            <td>{{ request.khach_hang.ten_kh }}</td>
+                            <td>{{ request.phong.ten_p }}</td>
+                            <td>{{ request.noi_dung_yc|truncatewords:10 }}</td>
+                            <td>
+                                <span class="status-badge {% if request.tinh_trang == 'cho_phan_cong' %}badge-waiting{% elif request.tinh_trang == 'da_phan_cong' %}badge-checked-in{% elif request.tinh_trang == 'dang_xu_ly' %}badge-confirmed{% else %}badge-cancelled{% endif %}">
+                                    {{ request.get_tinh_trang_display }}
+                                </span>
+                            </td>
+                            {% if is_admin %}
+                            <td>{{ request.nhan_vien.ten_nv|default:"Chưa phân công" }}</td>
+                            <td>
+                                <a href="{% url 'process_request' request.pk %}" class="btn btn-sm btn-outline-primary">Xử lý</a>
+                            </td>
+                            {% else %}
+                            <td>
+                                {% if request.nhan_vien == staff_profile or not request.nhan_vien %}
+                                <a href="{% url 'process_request' request.pk %}" class="btn btn-sm btn-outline-primary">Xử lý</a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-primary disabled" disabled>Xử lý</button>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if is_admin %}7{% else %}6{% endif %}" class="text-center">Không có yêu cầu nào đang chờ xử lý.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

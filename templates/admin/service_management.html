@@ -1,0 +1,193 @@
+{% extends 'admin/base.html' %}
+{% load humanize %}
+{% load currency_filters %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Quản lý dịch vụ</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">Danh sách dịch vụ</h5>
+            <small class="text-muted">Số lượng: {{ page_obj.paginator.count }} dịch vụ</small>
+        </div>
+        <div class="d-flex">
+            <form method="get" class="d-flex align-items-center">
+                <div class="input-group me-2" style="width:250px;">
+                    <input type="text"
+                           name="search"
+                           class="form-control form-control-sm"
+                           placeholder="Tìm theo tên hoặc mô tả..."
+                           value="{{ search_query }}">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <div class="dropdown me-2">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            type="button"
+                            id="filterDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="width:300px;" aria-labelledby="filterDropdown">
+                        <div class="mb-3">
+                            <label class="form-label small">Trạng thái</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="active"   {% if request.GET.status == 'active'   %}selected{% endif %}>Hoạt động</option>
+                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Ngừng hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Khoảng giá</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="min_price" class="form-control" placeholder="Từ" value="{{ request.GET.min_price }}">
+                                <span class="input-group-text">-</span>
+                                <input type="number" name="max_price" class="form-control" placeholder="Đến" value="{{ request.GET.max_price }}">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_service_management' %}" class="btn btn-sm btn-outline-secondary">Xóa bộ lọc</a>
+                            <button type="submit" class="btn btn-sm btn-primary">Áp dụng</button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if is_admin %}
+                <a href="{% url 'add_service' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Thêm dịch vụ
+                </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã DV</th>
+                        <th>Ảnh</th>
+                        <th>Tên dịch vụ</th>
+                        <th>Phí dịch vụ</th>
+                        <th>Trạng thái</th>
+                        {% if is_admin %}<th class="text-center">Thao tác</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in page_obj %}
+                    <tr>
+                        <td>{{ service.ma_dv }}</td>
+                        <td>
+                            <img src="{{ service.anh_dai_dien.url }}"
+                                 class="rounded"
+                                 width="50" height="50"
+                                 alt="Ảnh {{ service.ten_dv }}"
+                                 onerror="this.onerror=null;this.src='{% static 'images/default-service.png' %}';">
+                        </td>
+                        <td>{{ service.ten_dv }}</td>
+                        <td>{{ service.phi_dv|format_currency }} VND</td>
+                        <td>
+                            {% if service.hoat_dong %}
+                            <span class="badge bg-success">Hoạt động</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Ngừng hoạt động</span>
+                            {% endif %}
+                        </td>
+                        {% if is_admin %}
+                        <td class="text-center">
+                            <a href="{% url 'edit_service' service.ma_dv %}"
+                               class="btn btn-sm btn-outline-primary me-1">Sửa</a>
+
+                            <!-- nút mở modal xoá -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger btn-delete-service"
+                                    data-url="{% url 'delete_service' service.ma_dv %}"
+                                    data-name="{{ service.ten_dv }}"
+                                    data-id="{{ service.ma_dv }}">
+                                Xóa
+                            </button>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if is_admin %}6{% else %}5{% endif %}"
+                            class="text-center text-muted py-5">
+                            <i class="fas fa-concierge-bell fs-3 mb-2"></i><br>
+                            {% if search_query %}
+                                Không tìm thấy dịch vụ phù hợp.
+                            {% else %}
+                                Hiện chưa có dịch vụ nào.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-light border-0 py-2">
+            {% include 'admin/pagination.html' with page_obj=page_obj %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Modal xác nhận xoá dịch vụ #}
+<div class="modal fade" id="deleteServiceModal" tabindex="-1" aria-labelledby="deleteServiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteServiceModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa dịch vụ
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="deleteServiceModalBody">
+        <!-- nội dung sẽ được JS đổ vào -->
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">Hủy</button>
+        <form method="post" id="deleteServiceForm" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Xóa</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var modalEl   = document.getElementById('deleteServiceModal'),
+      modal     = new bootstrap.Modal(modalEl),
+      bodyEl    = modalEl.querySelector('#deleteServiceModalBody'),
+      formEl    = modalEl.querySelector('#deleteServiceForm');
+
+  document.querySelectorAll('.btn-delete-service').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var url  = this.dataset.url,
+          name = this.dataset.name,
+          id   = this.dataset.id;
+
+      bodyEl.textContent = 'Bạn có chắc chắn muốn xóa dịch vụ "' + name + '" (Mã: ' + id + ') không?';
+      formEl.action = url;
+      modal.show();
+    });
+  });
+});
+</script>
+{% endblock %}

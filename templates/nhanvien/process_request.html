@@ -1,0 +1,126 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Bảng điều khiển</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_request_management' %}">Quản lý yêu cầu</a></li>
+<li class="breadcrumb-item active" aria-current="page">Xử lý yêu cầu #{{ yeu_cau.ma_yc }}</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Xử lý yêu cầu #{{ yeu_cau.ma_yc }}</h2>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thông tin yêu cầu</h5>
+            {% if is_admin and yeu_cau.pk %}
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editRequestModal">
+                <i class="fas fa-edit me-1"></i> Chỉnh sửa
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Mã yêu cầu</dt>
+                <dd class="col-sm-9">{{ yeu_cau.ma_yc }}</dd>
+                <dt class="col-sm-3">Khách hàng</dt>
+                <dd class="col-sm-9">{{ yeu_cau.khach_hang.ten_kh }}</dd>
+                <dt class="col-sm-3">Phòng</dt>
+                <dd class="col-sm-9">{{ yeu_cau.phong.ten_p }}</dd>
+                <dt class="col-sm-3">Loại yêu cầu</dt>
+                <dd class="col-sm-9">{{ yeu_cau.get_loai_yc_display }}</dd>
+                <dt class="col-sm-3">Nội dung</dt>
+                <dd class="col-sm-9">{{ yeu_cau.noi_dung_yc }}</dd>
+                <dt class="col-sm-3">Trạng thái</dt>
+                <dd class="col-sm-9">
+                    <span class="status-badge {% if yeu_cau.tinh_trang == 'cho_phan_cong' %}badge-waiting{% elif yeu_cau.tinh_trang == 'da_phan_cong' %}badge-checked-in{% elif yeu_cau.tinh_trang == 'dang_xu_ly' %}badge-confirmed{% elif yeu_cau.tinh_trang == 'da_xu_ly' %}badge-checked-out{% else %}badge-cancelled{% endif %}">
+                        {{ yeu_cau.get_tinh_trang_display }}
+                    </span>
+                </dd>
+                <dt class="col-sm-3">Nhân viên</dt>
+                <dd class="col-sm-9">{{ yeu_cau.nhan_vien.ten_nv|default:"Chưa phân công" }}</dd>
+                <dt class="col-sm-3">Thời gian tạo</dt>
+                <dd class="col-sm-9">{{ yeu_cau.ngay_tao|date:"d/m/Y H:i" }}</dd>
+                <dt class="col-sm-3">Thời gian hoàn thành</dt>
+                <dd class="col-sm-9">{{ yeu_cau.thoi_gian_hoan_thanh|date:"d/m/Y H:i"|default:"-" }}</dd>
+                <dt class="col-sm-3">Ghi chú</dt>
+                <dd class="col-sm-9">{{ yeu_cau.ghi_chu|default:"-" }}</dd>
+            </dl>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="note" class="form-label">Ghi chú xử lý</label>
+                    <textarea name="note" id="note" class="form-control" rows="4">{{ yeu_cau.ghi_chu }}</textarea>
+                </div>
+                {% if is_admin %}
+                <div class="mb-3">
+                    <label for="staff" class="form-label">Phân công nhân viên</label>
+                    <select name="staff" id="staff" class="form-select">
+                        <option value="">Chọn nhân viên</option>
+                        {% for staff in available_staff %}
+                        <option value="{{ staff.pk }}" {% if yeu_cau.nhan_vien.pk == staff.pk %}selected{% endif %}>
+                            {{ staff.ten_nv }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    {% if yeu_cau.tinh_trang in 'cho_phan_cong da_phan_cong' %}
+                    {% if is_admin %}
+                    <button type="submit" name="action" value="assign" class="btn btn-primary">Phân công</button>
+                    {% endif %}
+                    <button type="submit" name="action" value="processing" class="btn btn-primary">Bắt đầu xử lý</button>
+                    {% endif %}
+                    {% if yeu_cau.tinh_trang in 'da_phan_cong dang_xu_ly' %}
+                    <button type="submit" name="action" value="complete" class="btn btn-success">Hoàn thành</button>
+                    <button type="submit" name="action" value="cancel" class="btn btn-danger">Hủy</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if is_admin and yeu_cau.pk %}
+<div class="modal fade" id="editRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa yêu cầu #{{ yeu_cau.ma_yc }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'edit_request' yeu_cau.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mã yêu cầu</label>
+                        <input type="text" class="form-control" value="{{ yeu_cau.ma_yc }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Khách hàng</label>
+                        <input type="text" class="form-control" value="{{ yeu_cau.khach_hang.ten_kh }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loai_yc" class="form-label">Loại yêu cầu</label>
+                        <select name="loai_yc" id="loai_yc" class="form-select">
+                            {% for value, label in yeu_cau.LOAI_YC_CHOICES %}
+                            <option value="{{ value }}" {% if yeu_cau.loai_yc == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noi_dung_yc" class="form-label">Nội dung yêu cầu</label>
+                        <textarea name="noi_dung_yc" id="noi_dung_yc" class="form-control" rows="4">{{ yeu_cau.noi_dung_yc }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

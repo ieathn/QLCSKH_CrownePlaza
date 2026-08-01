@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm"> {# Thêm shadow-sm cho card đẹp hơn #}
+                <div class="card-body p-0">
+                    <div class="profile-image-container position-relative"
+                         style="width: 100%; height: 250px; overflow: hidden; border-top-left-radius: var(--bs-card-border-radius, 0.375rem); border-top-right-radius: var(--bs-card-border-radius, 0.375rem); background-color: #e0e0e0;">
+                        {# Sử dụng var(--bs-card-border-radius) để đồng bộ với bo góc của card #}
+                        <img src="{% if form.instance.avatar %}{{ form.instance.avatar.url }}{% else %}{% static 'images/default-avartar.jpg' %}{% endif %}"
+                             alt="Ảnh đại diện"
+                             class="rounded-circle position-absolute start-0 ms-4"
+                             style="width: 180px; height: 180px; object-fit: cover; top: 50%; transform: translateY(-50%); border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1);"
+                             id="avatar-preview">
+                        <label for="id_avatar" class="btn btn-primary rounded-circle position-absolute"
+                               title="Thay đổi ảnh đại diện"
+                               style="width: 40px; height: 40px; top: 65%; left: 150px; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                            <i class="fas fa-pencil-alt"></i>
+                        </label>
+                        {{ form.avatar }} {# Input file này sẽ được ẩn bởi CSS #}
+                    </div>
+
+                    <div class="p-4">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Mã người dùng</label> {# Giả sử là user.id hoặc một mã định danh khác #}
+                                <input type="text" class="form-control" value="{{ user.username|default:user.id }}" style="background-color: #EEF6FB;" disabled>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Họ</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}<div class="invalid-feedback d-block">{{ form.last_name.errors|join:", " }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">Tên</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}<div class="invalid-feedback d-block">{{ form.first_name.errors|join:", " }}</div>{% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors|join:", " }}</div>{% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.sdt.id_for_label }}" class="form-label">Số điện thoại</label>
+                                {{ form.sdt }}
+                                {% if form.sdt.errors %}<div class="invalid-feedback d-block">{{ form.sdt.errors|join:", " }}</div>{% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.dia_chi.id_for_label }}" class="form-label">Địa chỉ</label>
+                                {{ form.dia_chi }}
+                                {% if form.dia_chi.errors %}<div class="invalid-feedback d-block">{{ form.dia_chi.errors|join:", " }}</div>{% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <a href="{% url 'change_password' %}" class="btn btn-outline-secondary">Đổi mật khẩu</a>
+                                <div>
+                                    <a href="{% url 'profile' %}" class="btn btn-secondary">Hủy</a>
+                                    <button type="submit" class="btn btn-primary ms-2">
+                                        <i class="fas fa-save me-1"></i> Lưu thay đổi
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Profile image container style matches inline style for precedence */
+    /* .profile-image-container {} */
+
+    .btn-primary.rounded-circle:hover {
+        /* Inline styles on the label for this button are quite specific.
+           To override, you might need !important or more specific selectors if this doesn't take effect.
+           However, simple hover effects often work. */
+        transform: translateY(-50%) scale(1.1) !important; /* Example if inline style is too strong */
+        transition: all 0.3s ease;
+    }
+
+    /* Custom background for inputs, as requested */
+    .p-4 form input[type="text"]:not([disabled]),
+    .p-4 form input[type="email"]:not([disabled]),
+    .p-4 form textarea:not([disabled]) {
+        background-color: #EEF6FB !important;
+        border: 1px solid #ced4da;
+    }
+    /* Ensure disabled inputs also have a consistent look if desired, or let Bootstrap handle */
+     .p-4 form input[type="text"][disabled] {
+        background-color: #e9ecef; /* Standard Bootstrap disabled color */
+     }
+
+
+    #id_avatar { /* This ID must match the ID of your {{ form.avatar }} input */
+        display: none;
+    }
+</style>
+
+{# Link Font Awesome for icons - bạn có thể đã có link này trong base.html #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('id_avatar'); // Ensure this ID matches your form.avatar field
+    const avatarPreview = document.getElementById('avatar-preview');
+    const defaultAvatarUrl = "{% static 'images/default-avartar.jpg' %}";
+
+    if (avatarInput && avatarPreview) {
+        avatarPreview.setAttribute('data-initial-src', avatarPreview.src);
+
+        avatarInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                avatarPreview.src = avatarPreview.getAttribute('data-initial-src') || defaultAvatarUrl;
+            }
+        });
+    }
+
+    // Add 'form-control' to Django form fields for Bootstrap styling
+    const form = document.querySelector('.p-4 form');
+    if (form) {
+        const elements = form.querySelectorAll(
+            'input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"], input[type="tel"], input[type="url"], textarea, select'
+        );
+        elements.forEach(function(el) {
+            if (el.id === 'id_avatar') return; // Không áp dụng form-control cho input avatar ẩn
+
+            if (el.tagName === 'SELECT') {
+                if (!el.classList.contains('form-select') && !el.disabled) {
+                    el.classList.add('form-select');
+                }
+            } else {
+                if (!el.classList.contains('form-control') && el.type !== 'hidden' && !el.disabled) {
+                    el.classList.add('form-control');
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

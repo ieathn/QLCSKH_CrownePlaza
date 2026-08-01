@@ -1,0 +1,197 @@
+{% extends 'admin/base.html' %}
+{% load static %} {# It's good practice to load static if you might add custom CSS/JS later #}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_staff_management' %}">Quản lý nhân viên</a></li>
+<li class="breadcrumb-item active" aria-current="page">Thêm nhân viên mới</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Thêm nhân viên mới</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'add_staff' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">Tên đăng nhập</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.username.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold">Mật khẩu</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="mb-3 text-muted">Thông tin cá nhân</h6>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.ten_nv.id_for_label }}" class="form-label">Tên nhân viên</label>
+                                {{ form.ten_nv }}
+                                {% if form.ten_nv.errors %}<div class="invalid-feedback d-block">{{ form.ten_nv.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.gioi_tinh.id_for_label }}" class="form-label">Giới tính</label>
+                                {{ form.gioi_tinh }}
+                                {% if form.gioi_tinh.errors %}<div class="invalid-feedback d-block">{{ form.gioi_tinh.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.sdt.id_for_label }}" class="form-label">Số điện thoại</label>
+                                {{ form.sdt }}
+                                {% if form.sdt.errors %}<div class="invalid-feedback d-block">{{ form.sdt.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.ngay_vao_lam.id_for_label }}" class="form-label">Ngày vào làm</label>
+                                {{ form.ngay_vao_lam }}
+                                {% if form.ngay_vao_lam.errors %}<div class="invalid-feedback d-block">{{ form.ngay_vao_lam.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.vi_tri.id_for_label }}" class="form-label">Vị trí</label>
+                                {{ form.vi_tri }}
+                                {% if form.vi_tri.errors %}<div class="invalid-feedback d-block">{{ form.vi_tri.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="mb-3">
+                        <label for="{{ form.dia_chi.id_for_label }}" class="form-label">Địa chỉ</label>
+                        {{ form.dia_chi }}
+                        {% if form.dia_chi.errors %}<div class="invalid-feedback d-block">{{ form.dia_chi.errors|join:", " }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.trang_thai.id_for_label }}" class="form-label">Trạng thái</label>
+                        {{ form.trang_thai }}
+                        {% if form.trang_thai.errors %}<div class="invalid-feedback d-block">{{ form.trang_thai.errors|join:", " }}</div>{% endif %}
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.anh_dai_dien.id_for_label }}" class="form-label">Ảnh đại diện</label>
+                        {{ form.anh_dai_dien }}
+                        {% if form.anh_dai_dien.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.anh_dai_dien.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <img id="imagePreview" src="#" alt="Xem trước ảnh" class="img-fluid rounded" style="max-height: 200px; display: none; border: 1px solid #ddd; padding: 5px;" />
+                            <small id="imagePreviewText" class="form-text text-muted">Chưa có ảnh nào được chọn.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'admin_staff_management' %}" class="btn btn-outline-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> Thêm nhân viên
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %} {# Add a new block for page-specific JavaScript #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.anh_dai_dien.id_for_label }}'); // Get the input by its ID
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewText = document.getElementById('imagePreviewText');
+
+    if (imageInput) { // Make sure the element exists
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    imagePreviewText.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+                imagePreviewText.style.display = 'block';
+            }
+        });
+    } else {
+        console.warn('Image input field with ID "{{ form.anh_dai_dien.id_for_label }}" not found.');
+    }
+
+    // Add Bootstrap classes to form elements if Django doesn't do it automatically
+    // This is a more robust way than manually adding them in the template for each field
+    const formElements = document.querySelectorAll('.card-body form input, .card-body form select, .card-body form textarea');
+    formElements.forEach(function(element) {
+        if (element.type === 'file') {
+            element.classList.add('form-control'); // Bootstrap styles file inputs this way
+        } else if (element.tagName.toLowerCase() === 'select') {
+            element.classList.add('form-select');
+        } else if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'hidden' && element.type !== 'submit' && element.type !== 'reset' && element.type !== 'button') {
+           if(!element.classList.contains('form-control')){ // Avoid adding if already present
+                element.classList.add('form-control');
+           }
+        }
+    });
+
+    // Style Django's default error lists if they appear
+    const errorLists = document.querySelectorAll('.errorlist');
+    errorLists.forEach(function(list) {
+        list.classList.add('list-unstyled', 'text-danger', 'small');
+        Array.from(list.getElementsByTagName('li')).forEach(li => {
+            li.classList.add('mb-1');
+        });
+    });
+});
+</script>
+{% endblock %}

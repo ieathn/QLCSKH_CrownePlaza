@@ -1,0 +1,234 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_staff_management' %}">Quản lý nhân viên</a></li>
+<li class="breadcrumb-item active" aria-current="page">Chỉnh sửa nhân viên</li>
+{% endblock %}
+
+{% block admin_content %}
+{% if messages %}
+<div class="container mt-0 mb-3"> {# Adjusted margin for messages to be closer to the card #}
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-white"> {# Changed to bg-success for edit pages, or use bg-primary if you prefer consistency #}
+        <h5 class="mb-0">Chỉnh sửa thông tin nhân viên: {{ staff.ten_nv|default:staff.tai_khoan.username }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'edit_staff' staff.ma_nv %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <h6 class="mb-3 text-muted">Thông tin tài khoản</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên đăng nhập</label>
+                        <input type="text" class="form-control" value="{{ staff.tai_khoan.username }}" disabled readonly>
+                        <small class="form-text text-muted">Không thể thay đổi tên đăng nhập.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.new_password.id_for_label }}" class="form-label fw-semibold">Đổi mật khẩu (để trống nếu không thay đổi)</label>
+                        {{ form.new_password }}
+                        {% if form.new_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.new_password.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        {% if form.new_password.help_text %}
+                            <small class="form-text text-muted">{{ form.new_password.help_text }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="mb-3 text-muted">Thông tin cá nhân & liên hệ</h6>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.ten_nv.id_for_label }}" class="form-label">Tên nhân viên</label>
+                                {{ form.ten_nv }}
+                                {% if form.ten_nv.errors %}<div class="invalid-feedback d-block">{{ form.ten_nv.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.gioi_tinh.id_for_label }}" class="form-label">Giới tính</label>
+                                {{ form.gioi_tinh }}
+                                {% if form.gioi_tinh.errors %}<div class="invalid-feedback d-block">{{ form.gioi_tinh.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.sdt.id_for_label }}" class="form-label">Số điện thoại</label>
+                                {{ form.sdt }}
+                                {% if form.sdt.errors %}<div class="invalid-feedback d-block">{{ form.sdt.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.ngay_vao_lam.id_for_label }}" class="form-label">Ngày vào làm</label>
+                                {{ form.ngay_vao_lam }}
+                                {% if form.ngay_vao_lam.errors %}<div class="invalid-feedback d-block">{{ form.ngay_vao_lam.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.vi_tri.id_for_label }}" class="form-label">Vị trí</label>
+                                {{ form.vi_tri }}
+                                {% if form.vi_tri.errors %}<div class="invalid-feedback d-block">{{ form.vi_tri.errors|join:", " }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="mb-3">
+                        <label for="{{ form.dia_chi.id_for_label }}" class="form-label">Địa chỉ</label>
+                        {{ form.dia_chi }}
+                        {% if form.dia_chi.errors %}<div class="invalid-feedback d-block">{{ form.dia_chi.errors|join:", " }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.trang_thai.id_for_label }}" class="form-label">Trạng thái</label>
+                        {{ form.trang_thai }}
+                        {% if form.trang_thai.errors %}<div class="invalid-feedback d-block">{{ form.trang_thai.errors|join:", " }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.anh_dai_dien.id_for_label }}" class="form-label">Ảnh đại diện</label>
+                        {{ form.anh_dai_dien }}
+                        {% if form.anh_dai_dien.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.anh_dai_dien.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <img id="imagePreview"
+                                 src="{% if staff.anh_dai_dien %}{{ staff.anh_dai_dien.url }}{% else %}{% static 'path/to/your/default/avatar.png' %}{% endif %}"
+                                 alt="Xem trước ảnh"
+                                 class="img-fluid rounded"
+                                 style="max-height: 200px; display: block; border: 1px solid #ddd; padding: 5px;"
+                                 onerror="this.onerror=null; this.src='{% static 'path/to/your/default/avatar.png' %}'; this.alt='Ảnh mặc định';" />
+                            <small id="imagePreviewText" class="form-text text-muted" style="display: {% if staff.anh_dai_dien %}none{% else %}block{% endif %};">
+                                {% if not staff.anh_dai_dien %}Chưa có ảnh nào.{% endif %} Chọn ảnh mới để thay thế hoặc thêm.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'admin_staff_management' %}" class="btn btn-outline-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.anh_dai_dien.id_for_label }}'); // Use the ID rendered by Django
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewText = document.getElementById('imagePreviewText');
+    const defaultAvatarUrl = "{% static 'path/to/your/default/avatar.png' %}"; // Define your default avatar path
+
+    // Fallback for image error on initial load
+    if (imagePreview && !imagePreview.complete && imagePreview.naturalWidth === 0) {
+        imagePreview.src = defaultAvatarUrl;
+        imagePreview.alt = 'Ảnh mặc định';
+    }
+
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    if(imagePreviewText) imagePreviewText.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                // If user cancels file selection, revert to original or default if no original
+                const originalImageUrl = "{% if staff.anh_dai_dien %}{{ staff.anh_dai_dien.url }}{% else %}" + defaultAvatarUrl + "{% endif %}";
+                imagePreview.src = originalImageUrl;
+                if (!originalImageUrl || originalImageUrl === defaultAvatarUrl) {
+                     if(imagePreviewText) imagePreviewText.style.display = 'block';
+                }
+            }
+        });
+    } else {
+        console.warn('Image input field with ID "{{ form.anh_dai_dien.id_for_label }}" not found.');
+    }
+
+    // Add Bootstrap classes to form elements if Django doesn't do it automatically
+    const formElements = document.querySelectorAll('.card-body form input:not([type="hidden"]):not([disabled]), .card-body form select, .card-body form textarea');
+    formElements.forEach(function(element) {
+        if (element.type === 'file') {
+            element.classList.add('form-control');
+        } else if (element.tagName.toLowerCase() === 'select') {
+            if (!element.classList.contains('form-select')) {
+                element.classList.add('form-select');
+            }
+        } else if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'submit' && element.type !== 'reset' && element.type !== 'button') {
+           if(!element.classList.contains('form-control')){
+                element.classList.add('form-control');
+           }
+        }
+    });
+
+    // Style Django's default error lists if they appear
+    const errorLists = document.querySelectorAll('ul.errorlist'); // More specific selector
+    errorLists.forEach(function(list) {
+        list.classList.add('list-unstyled', 'text-danger', 'small', 'mt-1');
+        Array.from(list.getElementsByTagName('li')).forEach(li => {
+            li.classList.add('mb-0');
+        });
+        // Place error list directly after the input if possible
+        if (list.previousElementSibling) {
+            list.previousElementSibling.classList.add('is-invalid');
+        }
+    });
+
+    // Style specific error messages rendered by {{ form.field.errors }}
+    // This is a bit more complex as they are not in a ul.errorlist by default template rendering
+    // The invalid-feedback d-block approach in the HTML is usually sufficient.
+
+});
+</script>
+{% endblock %}

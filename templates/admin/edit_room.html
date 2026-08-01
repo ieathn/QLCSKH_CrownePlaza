@@ -1,0 +1,232 @@
+{% extends 'admin/base.html' %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light rounded px-3 py-2 mb-4">
+    <li class="breadcrumb-item"><a href="{% url 'admin_room_management' %}">Quản lý phòng</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa: {{ room.ten_p }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow border-0">
+  <div class="card-header bg-primary text-white d-flex align-items-center"> {# Đổi thành màu xanh primary #}
+    <i class="fas fa-edit me-2 fa-lg"></i>
+    <h5 class="mb-0">Chỉnh sửa phòng: {{ room.ten_p }}</h5>
+  </div>
+  <div class="card-body">
+    <form id="editRoomForm" method="post" enctype="multipart/form-data" class="row g-4 needs-validation" novalidate>
+      {% csrf_token %}
+      <div class="col-12">
+        <h6 class="text-primary mb-3">Thông tin cơ bản</h6>
+      </div>
+
+      <div class="col-md-6">
+        <label for="{{ form.ten_p.id_for_label }}" class="form-label">Tên phòng <span class="text-danger">*</span></label>
+        {{ form.ten_p }}
+        <div class="invalid-feedback">
+          {% for error in form.ten_p.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="{{ form.loai_p.id_for_label }}" class="form-label">Loại phòng <span class="text-danger">*</span></label>
+        {{ form.loai_p }}
+        <div class="invalid-feedback">
+          {% for error in form.loai_p.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label for="{{ form.gia.id_for_label }}" class="form-label">Giá phòng <span class="text-danger">*</span></label>
+        <div class="input-group">
+          {{ form.gia }}
+          <span class="input-group-text">VND</span>
+        </div>
+        <div class="invalid-feedback">
+          {% for error in form.gia.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label for="{{ form.suc_chua.id_for_label }}" class="form-label">Sức chứa <span class="text-danger">*</span></label>
+        {{ form.suc_chua }}
+        <div class="invalid-feedback">
+          {% for error in form.suc_chua.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label for="{{ form.trang_thai.id_for_label }}" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+        {{ form.trang_thai }}
+        <div class="invalid-feedback">
+          {% for error in form.trang_thai.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-12">
+        <hr>
+        <h6 class="text-primary mb-3">Ảnh đại diện (Ảnh chính)</h6>
+      </div>
+
+      <div class="col-md-4">
+        <label for="{{ form.anh_dai_dien.id_for_label }}" class="form-label">Chọn ảnh mới (nếu muốn thay đổi)</label>
+        {{ form.anh_dai_dien }}
+        <div class="invalid-feedback">
+          {% for error in form.anh_dai_dien.errors %}{{ error }}{% endfor %}
+        </div>
+         {% if room.anh_dai_dien %}
+            <p class="mt-2">Ảnh hiện tại:</p>
+            <img src="{{ room.anh_dai_dien.url }}" alt="Ảnh đại diện hiện tại" class="img-fluid rounded shadow-sm" style="max-height: 150px;">
+        {% endif %}
+      </div>
+      <div class="col-md-8 d-flex justify-content-center align-items-center">
+        <img id="imagePreview" src="#" alt="Xem trước ảnh mới" class="img-fluid rounded shadow-sm" style="max-height: 250px; display: none;">
+      </div>
+
+      <div class="col-12">
+        <hr>
+        <h6 class="text-primary mb-3">Ảnh phụ (Thêm mới hoặc sửa/xóa ảnh hiện có)</h6>
+      </div>
+      <div class="col-12">
+        {{ formset.management_form }} {# Rất quan trọng cho formset #}
+        {% for anh_form in formset %}
+          <div class="row mb-3 align-items-center border-bottom pb-3">
+            <div class="col-md-1">
+                {{ anh_form.id }} {# Trường ẩn ID nếu có #}
+            </div>
+            <div class="col-md-3">
+                {% if anh_form.instance.pk and anh_form.instance.anh %}
+                    <p class="mb-1 small">Ảnh hiện tại:</p>
+                    <img src="{{ anh_form.instance.anh.url }}" alt="Ảnh phụ {{ forloop.counter }}" class="img-fluid rounded mb-2" style="max-height: 100px;">
+                {% endif %}
+              {{ anh_form.anh.label_tag }}
+              {{ anh_form.anh }}
+              {% if anh_form.anh.errors %}
+                <div class="text-danger small">
+                  {% for error in anh_form.anh.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-5">
+              {{ anh_form.mo_ta_anh.label_tag }}
+              {{ anh_form.mo_ta_anh }}
+               {% if anh_form.mo_ta_anh.errors %}
+                <div class="text-danger small">
+                  {% for error in anh_form.mo_ta_anh.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            {% if anh_form.instance.pk and anh_form.can_delete %} {# Hiển thị checkbox xóa nếu ảnh đã tồn tại #}
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check">
+                    {{ anh_form.DELETE }}
+                    <label for="{{ anh_form.DELETE.id_for_label }}" class="form-check-label">Đánh dấu để xóa ảnh này</label>
+                </div>
+            </div>
+            {% endif %}
+
+             {% if anh_form.non_field_errors %}
+                <div class="alert alert-danger mt-2">
+                    {% for error in anh_form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger mt-2">
+                {% for error in formset.non_form_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <hr>
+        <h6 class="text-primary mb-3">Chi tiết thêm</h6>
+      </div>
+
+      <div class="col-md-6">
+        <label for="{{ form.tien_ich.id_for_label }}" class="form-label">Tiện ích</label>
+        {{ form.tien_ich }}
+        <div class="invalid-feedback">
+          {% for error in form.tien_ich.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="{{ form.mo_ta.id_for_label }}" class="form-label">Mô tả</label>
+        {{ form.mo_ta }}
+        <div class="invalid-feedback">
+          {% for error in form.mo_ta.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label for="{{ form.chinh_sach_huy_p.id_for_label }}" class="form-label">Chính sách hủy phòng</label>
+        {{ form.chinh_sach_huy_p }}
+        <div class="invalid-feedback">
+          {% for error in form.chinh_sach_huy_p.errors %}{{ error }}{% endfor %}
+        </div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end pt-3">
+        <a href="{% url 'admin_room_management' %}" class="btn btn-outline-secondary me-2">
+          <i class="fas fa-times me-1"></i>Hủy
+        </a>
+        <button type="submit" class="btn btn-primary"> {# Đổi thành màu xanh primary #}
+          <i class="fas fa-save me-1"></i>Lưu thay đổi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Áp class Bootstrap tự động
+    document.querySelectorAll('#editRoomForm input, #editRoomForm select, #editRoomForm textarea').forEach(el => {
+       if (el.type === 'file') {
+        el.classList.add('form-control');
+      } else if (el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'hidden') {
+         el.classList.add(el.tagName === 'SELECT' ? 'form-select' : 'form-control');
+      }
+    });
+
+    // Xem trước ảnh đại diện
+    const fileInput = document.getElementById('{{ form.anh_dai_dien.id_for_label }}');
+    const preview = document.getElementById('imagePreview');
+    if (fileInput) {
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          preview.src = url;
+          preview.style.display = 'block';
+        } else {
+          preview.src = '#';
+          preview.style.display = 'none';
+        }
+      });
+    }
+
+    // Bootstrap Validation
+    const form = document.getElementById('editRoomForm');
+    form.addEventListener('submit', e => {
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+  });
+</script>
+{% endblock %}

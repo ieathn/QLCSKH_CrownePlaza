@@ -1,0 +1,258 @@
+{% extends 'admin/base.html' %}
+{% load currency_filters %}
+{% load static %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light rounded px-3 py-2 mb-4">
+    <li class="breadcrumb-item"><a href="{% url 'admin_room_management' %}">Quản lý phòng</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Thêm phòng mới</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-primary text-white d-flex align-items-center">
+    <i class="fas fa-plus-circle me-2 fa-lg"></i>
+    <h5 class="mb-0">Thêm phòng mới</h5>
+  </div>
+  <div class="card-body p-4">
+    <form id="addRoomForm" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger p-2" role="alert">
+            {% for error in form.non_field_errors %}
+                <small>{{ error }}</small><br>
+            {% endfor %}
+        </div>
+      {% endif %}
+
+      {# ===== PHẦN 1: THÔNG TIN CƠ BẢN ===== #}
+      <h6 class="text-primary fw-bold mb-3 mt-2">Thông tin cơ bản</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="{{ form.ten_p.id_for_label }}" class="form-label">Tên phòng <span class="text-danger">*</span></label>
+          {{ form.ten_p }}
+          <div class="invalid-feedback">{% for error in form.ten_p.errors %}{{ error }}{% endfor %}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.loai_p.id_for_label }}" class="form-label">Loại phòng <span class="text-danger">*</span></label>
+          {{ form.loai_p }}
+          <div class="invalid-feedback">{% for error in form.loai_p.errors %}{{ error }}{% endfor %}</div>
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.gia.id_for_label }}" class="form-label">Giá phòng <span class="text-danger">*</span></label>
+          <div class="input-group">
+            {{ form.gia }}
+            <span class="input-group-text">VND</span>
+          </div>
+          <div class="invalid-feedback">{% for error in form.gia.errors %}{{ error }}{% endfor %}</div>
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.suc_chua.id_for_label }}" class="form-label">Sức chứa <span class="text-danger">*</span></label>
+          {{ form.suc_chua }}
+          <div class="invalid-feedback">{% for error in form.suc_chua.errors %}{{ error }}{% endfor %}</div>
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.trang_thai.id_for_label }}" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+          {{ form.trang_thai }}
+          <div class="invalid-feedback">{% for error in form.trang_thai.errors %}{{ error }}{% endfor %}</div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      {# ===== PHẦN 2: ẢNH ĐẠI DIỆN (ẢNH CHÍNH) ===== #}
+      <h6 class="text-primary fw-bold mb-3">Ảnh đại diện (Ảnh chính)</h6>
+      <div class="row g-3 align-items-center">
+        <div class="col-md-5">
+          <label for="{{ form.anh_dai_dien.id_for_label }}" class="form-label">Chọn ảnh <span class="text-danger">*</span></label>
+          {{ form.anh_dai_dien }} {# Input cho ảnh chính #}
+          <div class="invalid-feedback">{% for error in form.anh_dai_dien.errors %}{{ error }}{% endfor %}</div>
+        </div>
+        <div class="col-md-7 d-flex justify-content-center align-items-center bg-light rounded p-3" style="min-height: 200px;">
+          <img id="imagePreview_main" src="#" alt="Xem trước ảnh đại diện" class="img-fluid rounded shadow-sm" style="max-height: 250px; display: none;">
+          <small id="imagePreviewText_main" class="text-muted">Xem trước ảnh đại diện sẽ hiển thị ở đây</small>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      {# ===== PHẦN 3: ẢNH PHỤ (FORMSET) ===== #}
+      <h6 class="text-primary fw-bold mb-3">Ảnh phụ (Thêm tối đa {{ formset.max_num|default:formset.extra }} ảnh)</h6>
+      {{ formset.management_form }}
+      {% for anh_phu_form in formset %}
+        <div class="row g-3 mb-4 align-items-center border-bottom pb-3" id="anh-phu-row-{{ forloop.counter0 }}">
+          {{ anh_phu_form.id }}
+          <div class="col-md-6">
+            <label for="{{ anh_phu_form.anh.id_for_label }}" class="form-label">Ảnh phụ {{ forloop.counter }}</label>
+            {{ anh_phu_form.anh }} {# Input cho ảnh phụ #}
+            {% if anh_phu_form.anh.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in anh_phu_form.anh.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="col-md-6 d-flex justify-content-center align-items-center bg-light rounded p-2" style="min-height: 120px;">
+            {# Thẻ img để xem trước, ID được tạo động và phải khớp với JS #}
+            <img id="preview_{{ anh_phu_form.anh.id_for_label }}" src="{% if anh_phu_form.instance.pk and anh_phu_form.instance.anh %}{{ anh_phu_form.instance.anh.url }}{% else %}#{% endif %}" alt="Xem trước ảnh phụ {{ forloop.counter }}" class="img-fluid rounded shadow-sm" style="max-height: 100px; display: {% if anh_phu_form.instance.pk and anh_phu_form.instance.anh %}block{% else %}none{% endif %};">
+            <small id="preview_text_{{ anh_phu_form.anh.id_for_label }}" class="text-muted" style="display: {% if anh_phu_form.instance.pk and anh_phu_form.instance.anh %}none{% else %}block{% endif %};">Xem trước ảnh phụ {{ forloop.counter }}</small>
+          </div>
+          {% if anh_phu_form.instance.pk %} {# Chỉ hiển thị checkbox Xóa cho form edit (ảnh đã tồn tại) #}
+            <div class="col-12">
+                <div class="form-check mt-1 text-end">
+                    {{ anh_phu_form.DELETE }}
+                    <label for="{{ anh_phu_form.DELETE.id_for_label }}" class="form-check-label text-danger">Xóa ảnh này</label>
+                </div>
+            </div>
+          {% endif %}
+        </div>
+        {% if anh_phu_form.non_field_errors %}
+          <div class="alert alert-danger p-2 small">{% for error in anh_phu_form.non_field_errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      {% endfor %}
+      {% if formset.non_form_errors %}
+        <div class="alert alert-danger p-2 small">{% for error in formset.non_form_errors %}{{ error }}{% endfor %}</div>
+      {% endif %}
+
+      <hr class="my-4">
+
+      {# ===== PHẦN 4: CHI TIẾT THÊM ===== #}
+      <h6 class="text-primary fw-bold mb-3">Chi tiết thêm</h6>
+      <div class="row g-3">
+          <div class="col-12">
+            <label for="{{ form.mo_ta.id_for_label }}" class="form-label">Mô tả</label>
+            {{ form.mo_ta }}
+            <div class="invalid-feedback">{% for error in form.mo_ta.errors %}{{ error }}{% endfor %}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="{{ form.tien_ich.id_for_label }}" class="form-label">Tiện ích</label>
+            <div class="border p-2 rounded" style="max-height: 150px; overflow-y: auto;">
+              {{ form.tien_ich }}
+            </div>
+            <div class="invalid-feedback">{% for error in form.tien_ich.errors %}{{ error }}{% endfor %}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="{{ form.chinh_sach_huy_p.id_for_label }}" class="form-label">Chính sách hủy phòng</label>
+            {{ form.chinh_sach_huy_p }}
+            <div class="invalid-feedback">{% for error in form.chinh_sach_huy_p.errors %}{{ error }}{% endfor %}</div>
+          </div>
+      </div>
+
+      {# ===== NÚT BẤM ===== #}
+      <div class="col-12 d-flex justify-content-end pt-3 mt-4 border-top">
+        <a href="{% url 'admin_room_management' %}" class="btn btn-outline-secondary me-2">
+          <i class="fas fa-times me-1"></i>Hủy
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save me-1"></i>Thêm phòng
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // === 1. Áp dụng class Bootstrap tự động ===
+    document.querySelectorAll('#addRoomForm input, #addRoomForm select, #addRoomForm textarea').forEach(el => {
+      if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return;
+      if (el.name && el.name.endsWith('-DELETE')) {
+          if (!el.classList.contains('form-check-input')) {
+            el.classList.add('form-check-input');
+          }
+          return;
+      }
+      if (el.type === 'checkbox' || el.type === 'radio') {
+          if (!el.classList.contains('form-check-input')) {
+            el.classList.add('form-check-input');
+          }
+          // Bọc checkbox/radio trong div.form-check nếu chưa có
+          if (el.parentElement && el.parentElement.tagName !== 'DIV' || !el.parentElement.classList.contains('form-check')) {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'form-check form-check-inline'; // Dùng form-check-inline nếu muốn trên 1 hàng
+              const label = document.querySelector(`label[for="${el.id}"]`);
+              // Di chuyển input vào wrapper trước, sau đó mới di chuyển label (nếu có)
+              const currentParent = el.parentNode;
+              currentParent.insertBefore(wrapper, el);
+              wrapper.appendChild(el);
+              if (label && label.htmlFor === el.id) { // Chỉ di chuyển label nếu nó đúng là của input này
+                  wrapper.appendChild(label);
+              }
+          }
+          return;
+      }
+      if (el.tagName === 'SELECT') {
+          if (!el.classList.contains('form-select')) el.classList.add('form-select');
+      } else {
+          if (!el.classList.contains('form-control')) el.classList.add('form-control');
+      }
+    });
+
+    // === 2. Hàm chung để xử lý xem trước ảnh ===
+    function setupImagePreview(fileInputId, previewImageId, previewTextId) {
+        const fileInput = document.getElementById(fileInputId);
+        const previewImage = document.getElementById(previewImageId);
+        const previewTextEl = previewTextId ? document.getElementById(previewTextId) : null;
+
+        if (fileInput && previewImage) {
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewImage.style.display = 'block';
+                        if (previewTextEl) previewTextEl.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImage.src = '#'; // Xóa ảnh xem trước nếu file không hợp lệ
+                    previewImage.style.display = 'none';
+                    if (previewTextEl) previewTextEl.style.display = 'block';
+                }
+            });
+        } else {
+            // console.warn(`SetupImagePreview: Input '${fileInputId}' or Preview '${previewImageId}' not found.`);
+        }
+    }
+
+    // === 3. Kích hoạt xem trước cho ảnh đại diện (Ảnh chính) ===
+    // Đổi ID cho ảnh chính để tránh trùng lặp nếu form.anh_dai_dien.id_for_label cũng là 'imagePreview'
+    setupImagePreview('{{ form.anh_dai_dien.id_for_label }}', 'imagePreview_main', 'imagePreviewText_main');
+    // Cần đảm bảo ID của thẻ img và small cho ảnh chính là 'imagePreview_main' và 'imagePreviewText_main'
+    // HTML của ảnh chính đã được cập nhật:
+    // <img id="imagePreview_main" ... >
+    // <small id="imagePreviewText_main" ... >
+
+    // === 4. Kích hoạt xem trước cho TẤT CẢ ảnh phụ trong formset ===
+    const totalFormsInput = document.querySelector('input[name="form-TOTAL_FORMS"]');
+    if (totalFormsInput) {
+        const totalForms = parseInt(totalFormsInput.value);
+        for (let i = 0; i < totalForms; i++) {
+            const fileInputId = `id_form-${i}-anh`;
+            // ID của thẻ img xem trước được tạo trong HTML là "preview_" + ID của input file
+            const previewImageId = `preview_${fileInputId}`;
+            const previewTextId = `preview_text_${fileInputId}`;
+            setupImagePreview(fileInputId, previewImageId, previewTextId);
+        }
+    }
+
+    // === 5. Kích hoạt Bootstrap Validation ===
+    const formElement = document.getElementById('addRoomForm');
+    if (formElement) {
+        formElement.addEventListener('submit', event => {
+          if (!formElement.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          formElement.classList.add('was-validated');
+        }, false);
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends 'admin/base.html' %}
+{% load currency_filters %} {# Nếu bạn có custom filter cho phí dịch vụ #}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_service_management' %}">Quản lý dịch vụ</a></li>
+<li class="breadcrumb-item active" aria-current="page">Chỉnh sửa dịch vụ</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white"> {# Bạn có thể đổi sang bg-success nếu muốn #}
+        <h5 class="mb-0">Chỉnh sửa dịch vụ: {{ form.instance.ten_dv|default:"Dịch vụ mới" }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="row">
+                {# Cột 1: Chi tiết dịch vụ #}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.ten_dv.id_for_label }}" class="form-label fw-semibold">Tên dịch vụ</label>
+                        {{ form.ten_dv }}
+                        {% if form.ten_dv.errors %}<div class="invalid-feedback d-block">{{ form.ten_dv.errors|join:", " }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.phi_dv.id_for_label }}" class="form-label">Phí dịch vụ (VND)</label>
+                        {{ form.phi_dv }}
+                        {% if form.phi_dv.errors %}<div class="invalid-feedback d-block">{{ form.phi_dv.errors|join:", " }}</div>{% endif %}
+                        {% if form.phi_dv.help_text %}<small class="form-text text-muted">{{ form.phi_dv.help_text }}</small>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.hoat_dong.id_for_label }}" class="form-label">Trạng thái hoạt động</label>
+                        {# Nếu form.hoat_dong là BooleanField (checkbox), bạn nên tùy chỉnh widget trong forms.py #}
+                        {# hoặc render thủ công để có cấu trúc <div class="form-check">...</div> của Bootstrap #}
+                        {{ form.hoat_dong }}
+                        {% if form.hoat_dong.errors %}<div class="invalid-feedback d-block">{{ form.hoat_dong.errors|join:", " }}</div>{% endif %}
+                        {% if form.hoat_dong.help_text %}<small class="form-text text-muted">{{ form.hoat_dong.help_text }}</small>{% endif %}
+                        {% comment %}
+                        Ví dụ cách render thủ công cho checkbox 'hoat_dong' nếu không custom widget:
+                        <div class="form-check mt-1">
+                            {{ form.hoat_dong }} {# Giả sử widget đã có class 'form-check-input' #}
+                            <label class="form-check-label" for="{{ form.hoat_dong.id_for_label }}">
+                                Hoạt động
+                            </label>
+                        </div>
+                        {% endcomment %}
+                    </div>
+                </div>
+
+                {# Cột 2: Ảnh đại diện và Mô tả #}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.anh_dai_dien.id_for_label }}" class="form-label fw-semibold">Ảnh đại diện dịch vụ</label>
+                        {{ form.anh_dai_dien }}
+                        {% if form.anh_dai_dien.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.anh_dai_dien.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <img id="imagePreview"
+                                 src="{% if form.instance.anh_dai_dien and form.instance.anh_dai_dien.url %}{{ form.instance.anh_dai_dien.url }}{% else %}{% static 'images/default-service-image.png' %}{% endif %}"
+                                 alt="Xem trước ảnh dịch vụ"
+                                 class="img-fluid rounded"
+                                 style="max-height: 200px; display: block; border: 1px solid #ddd; padding: 5px;"
+                                 onerror="this.onerror=null; this.src='{% static 'images/default-service-image.png' %}'; this.alt='Ảnh mặc định';" />
+                            <small id="imagePreviewText" class="form-text text-muted" style="display: {% if form.instance.anh_dai_dien and form.instance.anh_dai_dien.url %}none{% else %}block{% endif %};">
+                                {% if not form.instance.anh_dai_dien or not form.instance.anh_dai_dien.url %}Chưa có ảnh nào.{% endif %} Chọn ảnh mới để thay thế hoặc thêm.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.mo_ta.id_for_label }}" class="form-label">Mô tả ngắn</label>
+                        {{ form.mo_ta }} {# Giả sử đây là Textarea #}
+                        {% if form.mo_ta.errors %}<div class="invalid-feedback d-block">{{ form.mo_ta.errors|join:", " }}</div>{% endif %}
+                        {% if form.mo_ta.help_text %}<small class="form-text text-muted">{{ form.mo_ta.help_text }}</small>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'admin_service_management' %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-times me-1"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.anh_dai_dien.id_for_label }}');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewText = document.getElementById('imagePreviewText');
+    // QUAN TRỌNG: Thay 'images/default-service-image.png' bằng đường dẫn đúng tới ảnh mặc định của bạn
+    const defaultImageUrl = "{% static 'images/default-service-image.png' %}";
+
+    // Kiểm tra và hiển thị ảnh mặc định nếu ảnh hiện tại bị lỗi (trên trang load lần đầu)
+    if (imagePreview && imagePreview.src && imagePreview.src !== window.location.href && imagePreview.naturalWidth === 0) {
+        imagePreview.src = defaultImageUrl;
+        imagePreview.alt = 'Ảnh mặc định';
+        if (imagePreviewText) imagePreviewText.style.display = 'block';
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    if(imagePreviewText) imagePreviewText.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                // Nếu người dùng hủy chọn file, hiển thị lại ảnh gốc (nếu có) hoặc ảnh mặc định
+                const originalImageUrl = ("{% if form.instance.anh_dai_dien and form.instance.anh_dai_dien.url %}{{ form.instance.anh_dai_dien.url }}{% else %}" + defaultImageUrl + "{% endif %}").trim();
+                imagePreview.src = originalImageUrl !== "" ? originalImageUrl : defaultImageUrl; // Đảm bảo luôn có src
+                 if (imagePreview.src === defaultImageUrl || !"{% if form.instance.anh_dai_dien and form.instance.anh_dai_dien.url %}true{% endif %}"){
+                    if(imagePreviewText) imagePreviewText.style.display = 'block';
+                } else {
+                    if(imagePreviewText) imagePreviewText.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Tự động thêm class Bootstrap cho các trường form
+    const form = document.querySelector('.card-body form');
+    if (form) {
+        form.querySelectorAll('input, select, textarea').forEach(function(element) {
+            if (element.type === 'file') {
+                if (!element.classList.contains('form-control')) {
+                    element.classList.add('form-control');
+                }
+            } else if (element.tagName.toLowerCase() === 'select') {
+                if (!element.classList.contains('form-select')) {
+                    element.classList.add('form-select');
+                }
+            } else if (element.type === 'checkbox') {
+                // Không thêm 'form-control'.
+                // Để checkbox đẹp với Bootstrap, nên dùng widget tùy chỉnh trong forms.py
+                // để có class 'form-check-input' và bọc trong <div class="form-check">
+            } else if (element.type !== 'hidden' && element.type !== 'submit' &&
+                       element.type !== 'reset' && element.type !== 'button') {
+               if(!element.classList.contains('form-control')){
+                    element.classList.add('form-control');
+               }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
